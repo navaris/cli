@@ -1,0 +1,113 @@
+# Navaris Swarm Configuration
+# Copy this file to ~/.navaris/swarm.yaml and edit to match your topology
+#
+# Run: navaris swarm config --init
+# Or:  cp config/swarm.example.yaml ~/.navaris/swarm.yaml
+
+version: 1
+
+# The orchestrator is the primary swarm controller
+# This node runs OpenClaw gateway and coordinates agents
+orchestrator:
+  node: navaris-mini
+
+# Nodes in the swarm
+# Each node needs SSH key-based access configured
+nodes:
+  # Mac Mini - Swarm orchestrator
+  navaris-mini:
+    host: 192.168.68.86
+    user: navaris-swarm
+    type: orchestrator
+    
+  # Raspberry Pi cluster - Worker nodes
+  navcluster01:
+    host: navcluster01.local
+    user: pi
+    type: worker
+    role: trading-bot
+    
+  navcluster02:
+    host: navcluster02.local
+    user: pi
+    type: worker
+    role: trading-bot
+    
+  navcluster03:
+    host: navcluster03.local
+    user: pi
+    type: worker
+    role: hpc-node
+    
+  navcluster04:
+    host: navcluster04.local
+    user: pi
+    type: worker
+    role: hpc-node
+    
+  navcluster05:
+    host: navcluster05.local
+    user: pi
+    type: worker
+    role: hpc-node
+    
+  navcluster06:
+    host: navcluster06.local
+    user: pi
+    type: worker
+    role: hpc-node
+    
+  navcluster07:
+    host: navcluster07.local
+    user: pi
+    type: worker
+    role: monitoring
+    
+  navcluster08:
+    host: navcluster08.local
+    user: pi
+    type: worker
+    role: monitoring
+
+  # QNAP NAS - Shared storage
+  qnap-nas:
+    host: nase46577.local
+    user: admin
+    type: storage
+    probe: ping  # Only check reachability, no SSH metrics
+
+# Services to monitor
+services:
+  # OpenClaw gateway process
+  openclaw-gateway:
+    node: navaris-mini
+    check: process
+    process: openclaw-gateway
+    
+  # Telegram bot (via OpenClaw health)
+  telegram-bot:
+    node: navaris-mini
+    check: openclaw
+    channel: telegram
+    
+  # NAS mount points
+  nas-mount-swarm:
+    node: navaris-mini
+    check: mount
+    path: /Users/navaris-swarm/nas-mount/navaris-swarm
+    
+  nas-mount-labs:
+    node: navaris-mini
+    check: mount
+    path: /Users/navaris-swarm/nas-mount/navaris-labs
+
+# SSH connection settings
+ssh:
+  # Path to SSH private key (~ is expanded)
+  identity: ~/.ssh/id_ed25519
+  
+  # Connection timeout in seconds
+  timeout: 10
+  
+  # Keep connections alive for reuse
+  keepalive: true

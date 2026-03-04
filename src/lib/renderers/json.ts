@@ -37,6 +37,9 @@ export function renderNodesJSON(nodes: NodeProbeResult[]): string {
  * Render health check as JSON
  */
 export function renderHealthJSON(status: SwarmStatus): string {
+  const servicesDown = status.services.filter((s) => s.status === 'down');
+  const nodesDown = status.nodes.filter((n) => n.status === 'down');
+
   return JSON.stringify({
     healthy: status.healthy,
     timestamp: status.timestamp,
@@ -44,7 +47,7 @@ export function renderHealthJSON(status: SwarmStatus): string {
       services: {
         total: status.services.length,
         ok: status.services.filter((s) => s.status === 'ok').length,
-        down: status.services.filter((s) => s.status === 'down').length,
+        down: servicesDown.length,
       },
       agents: {
         total: status.agents.length,
@@ -53,8 +56,22 @@ export function renderHealthJSON(status: SwarmStatus): string {
       nodes: {
         total: status.nodes.length,
         ok: status.nodes.filter((n) => n.status === 'ok').length,
-        down: status.nodes.filter((n) => n.status === 'down').length,
+        down: nodesDown.length,
       },
     },
+    issues: [
+      ...servicesDown.map((s) => ({
+        type: 'service',
+        id: s.id,
+        status: s.status,
+        message: s.message,
+      })),
+      ...nodesDown.map((n) => ({
+        type: 'node',
+        id: n.id,
+        status: n.status,
+        error: n.error,
+      })),
+    ],
   }, null, 2);
 }

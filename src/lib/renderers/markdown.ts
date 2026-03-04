@@ -166,19 +166,42 @@ export function renderHealthMarkdown(status: SwarmStatus): string {
   const healthText = status.healthy ? 'Healthy' : 'Degraded';
   
   const servicesOk = status.services.filter((s) => s.status === 'ok').length;
+  const servicesDown = status.services.filter((s) => s.status === 'down');
   const servicesTotal = status.services.length;
   
   const nodesOk = status.nodes.filter((n) => n.status === 'ok').length;
+  const nodesDown = status.nodes.filter((n) => n.status === 'down');
   const nodesTotal = status.nodes.length;
   
   const agentsActive = status.agents.filter((a) => a.status === 'active').length;
   const agentsTotal = status.agents.length;
   
-  return [
+  const lines = [
     `${icon} *Swarm ${healthText}*`,
     '',
     `Services: ${servicesOk}/${servicesTotal} OK`,
     `Nodes: ${nodesOk}/${nodesTotal} OK`,
     `Agents: ${agentsActive}/${agentsTotal} active`,
-  ].join('\n');
+  ];
+
+  // Show what's down
+  if (servicesDown.length > 0) {
+    lines.push('');
+    lines.push('*Down:*');
+    for (const s of servicesDown) {
+      lines.push(`❌ ${s.id}${s.message ? ` — ${s.message}` : ''}`);
+    }
+  }
+
+  if (nodesDown.length > 0) {
+    if (servicesDown.length === 0) {
+      lines.push('');
+      lines.push('*Down:*');
+    }
+    for (const n of nodesDown) {
+      lines.push(`❌ ${n.id}${n.error ? ` — ${n.error}` : ''}`);
+    }
+  }
+  
+  return lines.join('\n');
 }

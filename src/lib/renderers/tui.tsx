@@ -255,7 +255,9 @@ function HealthView({ status }: HealthViewProps) {
   const text = status.healthy ? 'HEALTHY' : 'DEGRADED';
 
   const servicesOk = status.services.filter((s) => s.status === 'ok').length;
+  const servicesDown = status.services.filter((s) => s.status === 'down');
   const nodesOk = status.nodes.filter((n) => n.status === 'ok').length;
+  const nodesDown = status.nodes.filter((n) => n.status === 'down');
   const agentsActive = status.agents.filter((a) => a.status === 'active').length;
 
   return (
@@ -267,6 +269,24 @@ function HealthView({ status }: HealthViewProps) {
       <Text>Services: {servicesOk}/{status.services.length} OK</Text>
       <Text>Nodes: {nodesOk}/{status.nodes.length} OK</Text>
       <Text>Agents: {agentsActive}/{status.agents.length} active</Text>
+      
+      {servicesDown.length > 0 && (
+        <Box flexDirection="column" marginTop={1}>
+          <Text color="red" bold>Down Services:</Text>
+          {servicesDown.map((s) => (
+            <Text key={s.id} color="red">  ✗ {s.id}{s.message ? ` — ${s.message}` : ''}</Text>
+          ))}
+        </Box>
+      )}
+      
+      {nodesDown.length > 0 && (
+        <Box flexDirection="column" marginTop={1}>
+          <Text color="red" bold>Down Nodes:</Text>
+          {nodesDown.map((n) => (
+            <Text key={n.id} color="red">  ✗ {n.id}{n.error ? ` — ${n.error}` : ''}</Text>
+          ))}
+        </Box>
+      )}
     </Box>
   );
 }

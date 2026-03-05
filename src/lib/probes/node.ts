@@ -106,10 +106,11 @@ function parseUptime(output: string): string {
  */
 async function detectOS(
   node: NodeConfig,
+  nodeName: string,
   sshConfig: SwarmConfig['ssh']
 ): Promise<'macos' | 'linux' | 'unknown'> {
   try {
-    const result = await exec(node, 'uname -s', sshConfig);
+    const result = await exec(node, nodeName, 'uname -s', sshConfig);
     const os = result.stdout.trim().toLowerCase();
     if (os === 'darwin') return 'macos';
     if (os === 'linux') return 'linux';
@@ -130,7 +131,7 @@ export async function probeNode(
   const checkedAt = Date.now();
 
   // First check if node is reachable
-  const isReachable = await testConnection(node, sshConfig);
+  const isReachable = await testConnection(node, nodeId, sshConfig);
   
   if (!isReachable) {
     return {
@@ -155,7 +156,7 @@ export async function probeNode(
   }
 
   try {
-    const os = await detectOS(node, sshConfig);
+    const os = await detectOS(node, nodeId, sshConfig);
     
     let cpuPercent: number | undefined;
     let memoryUsedGB: number | undefined;
@@ -165,9 +166,9 @@ export async function probeNode(
     if (os === 'macos') {
       // macOS metrics
       const [cpuResult, memResult, uptimeResult] = await Promise.all([
-        exec(node, 'top -l 1 -n 0 | grep "CPU usage"', sshConfig),
-        exec(node, 'vm_stat', sshConfig),
-        exec(node, 'uptime', sshConfig),
+        exec(node, nodeId, 'top -l 1 -n 0 | grep "CPU usage"', sshConfig),
+        exec(node, nodeId, 'vm_stat', sshConfig),
+        exec(node, nodeId, 'uptime', sshConfig),
       ]);
       
       cpuPercent = parseMacOSCpu(cpuResult.stdout);
@@ -181,9 +182,9 @@ export async function probeNode(
     } else if (os === 'linux') {
       // Linux metrics (Pi nodes)
       const [cpuResult, memResult, uptimeResult] = await Promise.all([
-        exec(node, 'head -1 /proc/stat | awk \'{print $2, $3, $4, $5}\'', sshConfig),
-        exec(node, 'free -m | grep Mem:', sshConfig),
-        exec(node, 'uptime', sshConfig),
+        exec(node, nodeId, 'head -1 /proc/stat | awk \'{print $2, $3, $4, $5}\'', sshConfig),
+        exec(node, nodeId, 'free -m | grep Mem:', sshConfig),
+        exec(node, nodeId, 'uptime', sshConfig),
       ]);
       
       cpuPercent = parseLinuxCpu(cpuResult.stdout);

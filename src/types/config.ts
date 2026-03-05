@@ -30,6 +30,12 @@ export interface SSHConfig {
   identity?: string;
   timeout?: number;
   keepalive?: boolean;
+  /** Per-host identity overrides (glob patterns supported) */
+  identities?: Record<string, string>;
+  /** Jump host configuration (ProxyJump equivalent) */
+  jumpHost?: string;
+  /** Per-host jump host overrides (glob patterns supported) */
+  jumpHosts?: Record<string, string>;
 }
 
 export interface SwarmConfig {

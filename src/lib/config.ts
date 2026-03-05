@@ -8,6 +8,7 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import * as yaml from 'js-yaml';
 import type { SwarmConfig } from '../types/config.js';
+import { setSwarmConfig } from './ssh.js';
 
 const CONFIG_DIR = path.join(os.homedir(), '.navaris');
 const CONFIG_FILE = path.join(CONFIG_DIR, 'swarm.yaml');
@@ -75,6 +76,9 @@ export function loadConfig(): SwarmConfig {
         `Orchestrator node '${config.orchestrator.node}' not found in nodes`
       );
     }
+
+    // Set the swarm config reference for SSH jump host resolution
+    setSwarmConfig(config);
 
     return config;
   } catch (err) {

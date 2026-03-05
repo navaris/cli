@@ -30,10 +30,11 @@ interface SwarmAgentEntry {
  */
 async function getOpenClawAgents(
   node: NodeConfig,
+  nodeName: string,
   sshConfig: SwarmConfig['ssh']
 ): Promise<AgentProbeResult[]> {
   try {
-    const result = await execWithPath(node, 'openclaw agents list --json', sshConfig);
+    const result = await execWithPath(node, nodeName, 'openclaw agents list --json', sshConfig);
     
     if (result.code !== 0) {
       return [];
@@ -59,12 +60,14 @@ async function getOpenClawAgents(
  */
 async function getSwarmAgents(
   node: NodeConfig,
+  nodeName: string,
   sshConfig: SwarmConfig['ssh']
 ): Promise<AgentProbeResult[]> {
   try {
     // Read active.jsonl
     const result = await exec(
       node,
+      nodeName,
       'cat ~/swarm/agents/active.jsonl 2>/dev/null || echo ""',
       sshConfig
     );
@@ -84,6 +87,7 @@ async function getSwarmAgents(
         const pidFile = `~/swarm/agents/${entry.session}.pid`;
         const pidResult = await exec(
           node,
+          nodeName,
           `cat ${pidFile} 2>/dev/null && ps -p $(cat ${pidFile} 2>/dev/null) -o pid= 2>/dev/null || echo ""`,
           sshConfig
         );
@@ -142,11 +146,12 @@ function formatRuntime(ms: number): string {
 export async function probeAllAgents(
   config: SwarmConfig
 ): Promise<AgentProbeResult[]> {
-  const orchestrator = getOrchestratorNode(config);
+  const orchestratorName = config.orchestrator.node;
+  const orchestrator = config.nodes[orchestratorName];
   
   const [openClawAgents, swarmAgents] = await Promise.all([
-    getOpenClawAgents(orchestrator, config.ssh),
-    getSwarmAgents(orchestrator, config.ssh),
+    getOpenClawAgents(orchestrator, orchestratorName, config.ssh),
+    getSwarmAgents(orchestrator, orchestratorName, config.ssh),
   ]);
 
   return [...openClawAgents, ...swarmAgents];

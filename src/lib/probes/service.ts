@@ -11,11 +11,12 @@ import { exec, execWithPath, testConnection } from '../ssh.js';
  */
 async function checkProcess(
   node: NodeConfig,
+  nodeName: string,
   processName: string,
   sshConfig: SwarmConfig['ssh']
 ): Promise<ServiceProbeResult> {
   try {
-    const result = await exec(node, `pgrep -f "${processName}"`, sshConfig);
+    const result = await exec(node, nodeName, `pgrep -f "${processName}"`, sshConfig);
     const pids = result.stdout.trim().split('\n').filter(Boolean);
     
     if (pids.length > 0) {
@@ -49,6 +50,7 @@ async function checkProcess(
  */
 async function checkMount(
   node: NodeConfig,
+  nodeName: string,
   mountPath: string,
   sshConfig: SwarmConfig['ssh']
 ): Promise<ServiceProbeResult> {
@@ -56,6 +58,7 @@ async function checkMount(
     // Check if path exists and is a mount point
     const result = await exec(
       node,
+      nodeName,
       `test -d "${mountPath}" && mount | grep -q "${mountPath}" && echo "mounted" || echo "not_mounted"`,
       sshConfig
     );
@@ -84,11 +87,12 @@ async function checkMount(
  */
 async function checkOpenClaw(
   node: NodeConfig,
+  nodeName: string,
   channel: string | undefined,
   sshConfig: SwarmConfig['ssh']
 ): Promise<ServiceProbeResult> {
   try {
-    const result = await execWithPath(node, 'openclaw health --json', sshConfig);
+    const result = await execWithPath(node, nodeName, 'openclaw health --json', sshConfig);
     
     if (result.code !== 0) {
       return {
@@ -143,10 +147,11 @@ async function checkOpenClaw(
  */
 async function checkPing(
   node: NodeConfig,
+  nodeName: string,
   sshConfig: SwarmConfig['ssh']
 ): Promise<ServiceProbeResult> {
   try {
-    const isReachable = await testConnection(node, sshConfig);
+    const isReachable = await testConnection(node, nodeName, sshConfig);
     
     return {
       id: node.host,
@@ -195,7 +200,7 @@ export async function probeService(
           checkedAt: Date.now(),
         };
       }
-      result = await checkProcess(node, service.process, sshConfig);
+      result = await checkProcess(node, service.node, service.process, sshConfig);
       result.id = serviceId;
       return result;
 
@@ -208,17 +213,17 @@ export async function probeService(
           checkedAt: Date.now(),
         };
       }
-      result = await checkMount(node, service.path, sshConfig);
+      result = await checkMount(node, service.node, service.path, sshConfig);
       result.id = serviceId;
       return result;
 
     case 'openclaw':
-      result = await checkOpenClaw(node, service.channel, sshConfig);
+      result = await checkOpenClaw(node, service.node, service.channel, sshConfig);
       result.id = serviceId;
       return result;
 
     case 'ping':
-      result = await checkPing(node, sshConfig);
+      result = await checkPing(node, service.node, sshConfig);
       result.id = serviceId;
       return result;
 

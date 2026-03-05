@@ -25,8 +25,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/navaris/navaris-cli.git"
+    "url": "https://github.com/navaris/cli.git"
   },
+  "homepage": "https://github.com/navaris/cli#readme",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
